@@ -35,7 +35,8 @@ class AdHocFickian(BaseModel):
             domain=self.domain.lower() + " particle",
         )
 
-        self.get_standard_basis_variables(xi_1, xi_2)
+        variables = self.get_standard_basis_variables(xi_1, xi_2)
+        return variables
 
     def get_coupled_variables(self, variables):
 
@@ -128,7 +129,9 @@ class AdHocFickian(BaseModel):
 
         c_surf = (beta_1 - beta_1_av) * xi_1_surf + (beta_2 - beta_2_av) * xi_2_surf
 
-        self.get_standard_variance_variables(c_surf)
+        variables.update(self.get_standard_variance_variables(c_surf))
+
+        return variables
 
     def set_rhs(self, variables):
 
@@ -140,11 +143,11 @@ class AdHocFickian(BaseModel):
         T_av = variables["X-averaged cell temperature"]
 
         if self.domain == "Negative":
-            D = self.param.D_n(c_s_av, T_av)
+            D = self.param.D_n(1, 0)  # these are constant at the moment
             C = self.param.C_n
 
         elif self.domain == "Positive":
-            D = self.param.D_p(c_s_av, T_av)
+            D = self.param.D_p(1, 0)  # these are constant at the moment
             C = self.param.C_p
 
         self.rhs = {
@@ -174,7 +177,8 @@ class AdHocFickian(BaseModel):
         c_s_surf_av = variables[
             "X-averaged " + self.domain.lower() + " particle surface concentration"
         ]
-        T_av = variables["X-averaged " + self.domain.lower + " cell temperature"]
+        # T_av = variables["X-averaged cell temperature"]
+        T_av = pybamm.Scalar(0)
 
         if self.domain == "Negative":
             prefactor = self.param.m_n(T_av) / self.param.C_r_n
@@ -204,8 +208,8 @@ class AdHocFickian(BaseModel):
         alpha_2 = I / 2 * ((j0 ** 2 + j ** 2) ** (0.5))
 
         self.boundary_conditions = {
-            xi_1: {"left": 0, "right": a_k * pybamm.surf(xi_1) + alpha_1},
-            xi_2: {"left": 0, "right": a_k * pybamm.surf(xi_2) + alpha_2},
+            xi_1: {"left": (pybamm.Scalar(0), "Neumann"), "right": (a_k * pybamm.surf(xi_1) + alpha_1, "Neumann")},
+            xi_2: {"left": (pybamm.Scalar(0), "Neumann"), "right": (a_k * pybamm.surf(xi_2) + alpha_2, "Neumann")},
         }
 
     def get_initial_conditions(self, variables):

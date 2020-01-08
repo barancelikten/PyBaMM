@@ -25,10 +25,13 @@ class BaseModel(pybamm.BaseSubModel):
 
     def get_standard_variance_variables(self, c):
 
+        x_n = pybamm.standard_spatial_vars.x_n
+        x_p = pybamm.standard_spatial_vars.x_p
+
         if self.domain == "Negative":
-            c_var = pybamm.Integral(c ** 2) / self.param.l_n
+            c_var = pybamm.Integral(c ** 2, x_n) / self.param.l_n
         elif self.domain == "Positive":
-            c_var = pybamm.Integral(c ** 2) / self.param.l_p
+            c_var = pybamm.Integral(c ** 2, x_p) / self.param.l_p
 
         variables = {self.domain + " particle concentration variance": c_var}
 

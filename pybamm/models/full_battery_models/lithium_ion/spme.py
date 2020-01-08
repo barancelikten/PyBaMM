@@ -99,27 +99,21 @@ class SPMe(BaseModel):
         if self.options["particle variance"] is None:
             self.submodels[
                 "negative particle variance"
-            ] = pybamm.particle_variance.implicit_particle_variance(
-                self.param, "Negative"
-            )
+            ] = pybamm.particle_variance.Implicit(self.param, "Negative")
             self.submodels[
                 "positive particle variance"
-            ] = pybamm.particle_variance.implicit_particle_variance(
-                self.param, "Positive"
-            )
+            ] = pybamm.particle_variance.Implicit(self.param, "Positive")
         elif self.options["particle variance"] == "Fickian":
             self.submodels[
                 "negative particle variance"
-            ] = pybamm.particle_variance.ad_hoc_fickian(
-                self.param, "Negative"
-            )
+            ] = pybamm.particle_variance.AdHocFickian(self.param, "Negative")
             self.submodels[
                 "positive particle variance"
-            ] = pybamm.particle_variance.ad_hoc_fickian(
-                self.param, "Positive"
-            )
+            ] = pybamm.particle_variance.AdHocFickian(self.param, "Positive")
         else:
-            raise NotImplementedError("'particle variance' option must be either 'None' or 'Fickian'")
+            raise NotImplementedError(
+                "'particle variance' option must be either 'None' or 'Fickian'"
+            )
 
     def set_negative_electrode_submodel(self):
 
