@@ -42,6 +42,7 @@ class SPMe(BaseModel):
         self.set_convection_submodel()
         self.set_interfacial_submodel()
         self.set_particle_submodel()
+        self.set_particle_variance_submodel()
         self.set_negative_electrode_submodel()
         self.set_electrolyte_submodel()
         self.set_positive_electrode_submodel()
@@ -92,6 +93,33 @@ class SPMe(BaseModel):
             self.submodels["positive particle"] = pybamm.particle.fast.SingleParticle(
                 self.param, "Positive"
             )
+
+    def set_particle_variance_submodel(self):
+
+        if self.options["particle variance"] is None:
+            self.submodels[
+                "negative particle variance"
+            ] = pybamm.particle_variance.implicit_particle_variance(
+                self.param, "Negative"
+            )
+            self.submodels[
+                "positive particle variance"
+            ] = pybamm.particle_variance.implicit_particle_variance(
+                self.param, "Positive"
+            )
+        elif self.options["particle variance"] == "Fickian":
+            self.submodels[
+                "negative particle variance"
+            ] = pybamm.particle_variance.ad_hoc_fickian(
+                self.param, "Negative"
+            )
+            self.submodels[
+                "positive particle variance"
+            ] = pybamm.particle_variance.ad_hoc_fickian(
+                self.param, "Positive"
+            )
+        else:
+            raise NotImplementedError("'particle variance' option must be either 'None' or 'Fickian'")
 
     def set_negative_electrode_submodel(self):
 

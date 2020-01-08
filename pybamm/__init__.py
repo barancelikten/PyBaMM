@@ -170,6 +170,7 @@ from .models.submodels import (
     interface,
     oxygen_diffusion,
     particle,
+    particle_variance,
     porosity,
     thermal,
     tortuosity,

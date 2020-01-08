@@ -156,6 +156,7 @@ class BaseBatteryModel(pybamm.BaseModel):
             "thermal": "isothermal",
             "thermal current collector": False,
             "external submodels": [],
+            "particle variance": None
         }
         options = default_options
         # any extra options overwrite the default options
