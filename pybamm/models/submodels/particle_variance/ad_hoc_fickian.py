@@ -79,10 +79,11 @@ class AdHocFickian(BaseModel):
             / (gamma_e * 6 * D_e)
             * (
                 2 * ((l_p ** 2 / tor_p_av) - (l_n ** 2 / tor_n_av))
-                + 3 * l_s / tor_s_av * (1 - l_p - l_n)
+                + 3 * l_s / tor_s_av * (1 + l_p - l_n)
                 + 3 / (tor_n_0 * l_n) * (l_n ** 2 - x_n ** 2)
             )
         )
+
         c_e_p_hat = (
             (1 - t_plus)
             / (gamma_e * 6 * D_e)
@@ -93,27 +94,31 @@ class AdHocFickian(BaseModel):
             )
         )
 
-        phi_e_n_hat = (
-            1
-            / gamma_e
-            / kappa_n_av
-            * ((x_n ** 2 - l_n ** 2) / (2 * tor_n_av * l_n) + l_n / tor_s_av)
+        # cannot really do this mathematically but can only imagine it'll
+        # improve the results
+        I = variables["Current collector current density"]
+        c_e_n_hat = (
+            (variables["Negative electrolyte concentration"] - 1) / I / self.param.C_e
         )
-        phi_e_p_hat = (
-            1
-            / gamma_e
-            / kappa_p_av
-            * (
-                (x_p * (2 - x_p) + l_p ** 2 - 1) / (2 * tor_p_av * l_p)
-                + (1 - l_p) / tor_s_av
-            )
+        c_e_p_hat = (
+            (variables["Positive electrolyte concentration"] - 1) / I / self.param.C_e
+        )
+
+        phi_e_n_hat = 2 * (1 - t_plus) * c_e_n_hat - 1 / gamma_e / kappa_n_av * (
+            (x_n ** 2 - l_n ** 2) / (2 * tor_n_av * l_n) + l_n / tor_s_av
+        )
+        phi_e_p_hat = 2 * (1 + t_plus) * c_e_p_hat - 1 / gamma_e / kappa_p_av * (
+            (x_p * (2 - x_p) + l_p ** 2 - 1) / (2 * tor_p_av * l_p)
+            + (1 - l_p) / tor_s_av
         )
 
         phi_s_n_hat = (
-            x_n * (x_n - 2 * l_n) / (2 * self.param.sigma_n_prime * tor_n_0 * l_n)
+            x_n * (2 * l_n - x_n) / (2 * self.param.sigma_n_prime * tor_n_0 * l_n)
         )
-        phi_s_p_hat = x_p + (x_p - 1) ** 2 / (
-            2 * self.param.sigma_p_prime * tor_p_0 * l_p
+        phi_s_p_hat = (
+            (1 - 2 * l_p - x_p)
+            * (x_p - 1)
+            / (2 * self.param.sigma_p_prime * tor_p_0 * l_p)
         )
 
         if self.domain == "Negative":
@@ -129,7 +134,7 @@ class AdHocFickian(BaseModel):
 
         c_surf = (beta_1 - beta_1_av) * xi_1_surf + (beta_2 - beta_2_av) * xi_2_surf
 
-        variables.update(self.get_standard_variance_variables(c_surf))
+        variables.update(self.get_standard_variance_variables(self.param.C_e * c_surf))
 
         return variables
 
@@ -198,7 +203,7 @@ class AdHocFickian(BaseModel):
             / 2
             * (
                 j / c_s_surf_av
-                + j / (1 - c_s_surf_av)
+                - j / (1 - c_s_surf_av)
                 - dUdc * ((j0 ** 2 + j ** 2) ** (0.5))
             )
         )

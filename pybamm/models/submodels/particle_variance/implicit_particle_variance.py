@@ -28,13 +28,10 @@ class Implicit(BaseModel):
 
     def get_coupled_variables(self, variables):
 
-        c = variables[self.domain + " particle concentration"]
-        c_av = variables[
-            "X-averaged " + self.domain.lower() + " particle concentration"
+        c_surf = variables[self.domain + " particle surface concentration"]
+        c_av_surf = variables[
+            "X-averaged " + self.domain.lower() + " particle surface concentration"
         ]
-
-        c_surf = pybamm.surf(c)
-        c_av_surf = pybamm.surf(c_av)
 
         variables.update(self.get_standard_variance_variables(c_surf - c_av_surf))
 

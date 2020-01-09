@@ -156,7 +156,7 @@ class BaseBatteryModel(pybamm.BaseModel):
             "thermal": "isothermal",
             "thermal current collector": False,
             "external submodels": [],
-            "particle variance": None
+            "particle variance": None,
         }
         options = default_options
         # any extra options overwrite the default options
@@ -692,6 +692,34 @@ class BaseBatteryModel(pybamm.BaseModel):
         ocp_p_right_dim = pybamm.boundary_value(ocp_p_dim, "right")
 
         ocv_av = ocp_p_av - ocp_n_av
+
+        c_s_n_surf = self.variables[
+            "X-averaged negative particle surface concentration"
+        ]
+        c_s_p_surf = self.variables[
+            "X-averaged positive particle surface concentration"
+        ]
+        c_s_n_surf_var = self.variables["Negative particle concentration variance"]
+        c_s_p_surf_var = self.variables["Positive particle concentration variance"]
+
+        corrector_term = (1 / 2) * c_s_p_surf_var * self.param.d2Udc_p(
+            c_s_p_surf, 0
+        ) - (1 / 2) * c_s_n_surf_var * self.param.d2Udc_n(c_s_n_surf, 0)
+
+        if self.options["particle variance"] is not None:
+            ocv_av = ocv_av + corrector_term
+
+            V = self.variables["Terminal voltage"]
+            V = V + corrector_term
+
+            pot_scale = self.param.potential_scale
+            U_ref = self.param.U_p_ref - self.param.U_n_ref
+            self.variables.update(
+                {"Terminal voltage": V, "Terminal voltage [V]": U_ref + pot_scale * V}
+            )
+
+        self.variables.update({"Corrector term": corrector_term})
+
         ocv_av_dim = ocp_p_av_dim - ocp_n_av_dim
         ocv = ocp_p_right - ocp_n_left
         ocv_dim = ocp_p_right_dim - ocp_n_left_dim

@@ -33,7 +33,10 @@ class BaseModel(pybamm.BaseSubModel):
         elif self.domain == "Positive":
             c_var = pybamm.Integral(c ** 2, x_p) / self.param.l_p
 
-        variables = {self.domain + " particle concentration variance": c_var}
+        variables = {
+            self.domain + " particle concentration variance": c_var,
+            self.domain + " particle surface concentration difference": c,
+        }
 
         return variables
 

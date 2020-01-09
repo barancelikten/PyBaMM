@@ -40,6 +40,7 @@ class DFN(BaseModel):
         self.set_convection_submodel()
         self.set_interfacial_submodel()
         self.set_particle_submodel()
+        self.set_particle_variance_submodel()
         self.set_solid_submodel()
         self.set_electrolyte_submodel()
         self.set_thermal_submodel()
@@ -81,6 +82,14 @@ class DFN(BaseModel):
             self.submodels["positive particle"] = pybamm.particle.fast.ManyParticles(
                 self.param, "Positive"
             )
+
+    def set_particle_variance_submodel(self):
+        self.submodels[
+            "negative particle variance"
+        ] = pybamm.particle_variance.Implicit(self.param, "Negative")
+        self.submodels[
+            "positive particle variance"
+        ] = pybamm.particle_variance.Implicit(self.param, "Positive")
 
     def set_solid_submodel(self):
 

@@ -7,6 +7,7 @@ Maximum concentration in positive electrode [mol.m-3],51217.9257309275,Scott Mou
 Positive electrode diffusivity [m2.s-1],[function]lico2_diffusivity_Dualfoil1998,,
 Positive electrode OCP [V],[function]lico2_ocp_Dualfoil1998,
 Positive electrode OCP first derivative [V],[function]lico2_docp_dc_Dualfoil1998,
+Positive electrode OCP second derivative [V],[function]lico2_d2ocp_dc_Dualfoil1998,
 ,,,
 # Microstructure,,,
 Positive electrode porosity,0.3,Scott Moura FastDFN,electrolyte volume fraction

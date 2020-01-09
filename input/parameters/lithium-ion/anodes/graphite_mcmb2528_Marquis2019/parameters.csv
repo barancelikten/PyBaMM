@@ -7,6 +7,7 @@ Maximum concentration in negative electrode [mol.m-3],24983.2619938437,Scott Mou
 Negative electrode diffusivity [m2.s-1],[function]graphite_mcmb2528_diffusivity_Dualfoil1998,,
 Negative electrode OCP [V],[function]graphite_mcmb2528_ocp_Dualfoil1998,
 Negative electrode OCP first derivative [V],[function]graphite_mcmb2528_docp_dc_Dualfoil1998,
+Negative electrode OCP second derivative [V],[function]graphite_mcmb2528_d2ocp_dc_Dualfoil1998,
 ,,,
 # Microstructure,,,
 Negative electrode porosity,0.3,Scott Moura FastDFN,electrolyte volume fraction
