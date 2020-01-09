@@ -136,6 +136,16 @@ class AdHocFickian(BaseModel):
 
         variables.update(self.get_standard_variance_variables(self.param.C_e * c_surf))
 
+        # add variance to the surface concentration
+        c_s_surf = variables[self.domain + " particle surface concentration"]
+        c_s_surf = c_s_surf + self.param.C_e * c_surf
+        # if self.domain == "Negative":
+        #     c_scale = self.param.c_n_max
+        # if self.domain == "Positive":
+        #     c_scale = self.param.c_p_max
+
+        variables.update({self.domain + " particle surface concentration": c_s_surf})
+
         return variables
 
     def set_rhs(self, variables):
