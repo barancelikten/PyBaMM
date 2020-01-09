@@ -196,6 +196,18 @@ def U_p_dimensional(sto, T):
     return u_ref + (T - T_ref) * dUdT_p_dimensional(sto)
 
 
+def dUdc_n_dimensional(sto, T):
+    "Dimensional open-circuit potential first derivative in the negative electrode [V]"
+    dudc = pybamm.FunctionParameter("Negative electrode OCP first derivative [V]", sto)
+    return dudc
+
+
+def dUdc_p_dimensional(sto, T):
+    "Dimensional open-circuit potential first derivative in the positive electrode [V]"
+    dudc = pybamm.FunctionParameter("Positive electrode OCP first derivative [V]", sto)
+    return dudc
+
+
 # can maybe improve ref value at some stage
 U_n_ref = U_n_dimensional(pybamm.Scalar(0.7), T_ref)
 
@@ -425,6 +437,20 @@ def U_p(c_s_p, T):
     sto = c_s_p
     T_dim = Delta_T * T + T_ref
     return (U_p_dimensional(sto, T_dim) - U_p_ref) / potential_scale
+
+
+def dUdc_n(c_s_n, T):
+    "Dimensionless open-circuit potential first derivative in the negative electrode"
+    sto = c_s_n
+    T_dim = Delta_T * T + T_ref
+    return (dUdc_n_dimensional(sto, T_dim)) * c_n_max / potential_scale
+
+
+def dUdc_p(c_s_p, T):
+    "Dimensionless open-circuit potential first derivative in the positive electrode"
+    sto = c_s_p
+    T_dim = Delta_T * T + T_ref
+    return (dUdc_p_dimensional(sto, T_dim)) * c_p_max / potential_scale
 
 
 def dUdT_n(c_s_n):

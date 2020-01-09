@@ -36,5 +36,7 @@ class Implicit(BaseModel):
         c_surf = pybamm.surf(c)
         c_av_surf = pybamm.surf(c_av)
 
-        self.get_standard_variance_variables(c_surf - c_av_surf)
+        variables.update(self.get_standard_variance_variables(c_surf - c_av_surf))
+
+        return variables
 

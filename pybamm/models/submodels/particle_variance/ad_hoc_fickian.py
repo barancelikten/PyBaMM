@@ -135,19 +135,19 @@ class AdHocFickian(BaseModel):
 
     def set_rhs(self, variables):
 
-        c_s_av = variables[
-            "X-averaged " + self.domain.lower() + " particle concentration"
-        ]
+        # c_s_av = variables[
+        #     "X-averaged " + self.domain.lower() + " particle concentration"
+        # ]
         xi_1 = variables["First " + self.domain.lower() + " particle basis function"]
         xi_2 = variables["Second " + self.domain.lower() + " particle basis function"]
-        T_av = variables["X-averaged cell temperature"]
+        # T_av = variables["X-averaged cell temperature"]
 
         if self.domain == "Negative":
-            D = self.param.D_n(1, 0)  # these are constant at the moment
+            D = self.param.D_n(0, 0)  # these are constant at the moment
             C = self.param.C_n
 
         elif self.domain == "Positive":
-            D = self.param.D_p(1, 0)  # these are constant at the moment
+            D = self.param.D_p(0, 0)  # these are constant at the moment
             C = self.param.C_p
 
         self.rhs = {
@@ -189,11 +189,9 @@ class AdHocFickian(BaseModel):
         j0 = prefactor * (c_s_surf_av ** (1 / 2) * (1 - c_s_surf_av) ** (1 / 2))
 
         if self.domain == "Negative":
-            U = self.param.U_n(c_s_surf_av, T_av)
+            dUdc = self.param.dUdc_n(c_s_surf_av, T_av)
         elif self.domain == "Positive":
-            U = self.param.U_p(c_s_surf_av, T_av)
-
-        U_prime = U.diff(c_s_surf_av)
+            dUdc = self.param.dUdc_p(c_s_surf_av, T_av)
 
         a_k = (
             1
@@ -201,18 +199,29 @@ class AdHocFickian(BaseModel):
             * (
                 j / c_s_surf_av
                 + j / (1 - c_s_surf_av)
-                - U_prime * ((j0 ** 2 + j ** 2) ** (0.5))
+                - dUdc * ((j0 ** 2 + j ** 2) ** (0.5))
             )
         )
         alpha_1 = j * I / 2
         alpha_2 = I / 2 * ((j0 ** 2 + j ** 2) ** (0.5))
 
+        rbc_1 = a_k * pybamm.surf(xi_1) + alpha_1
+        rbc_2 = a_k * pybamm.surf(xi_2) + alpha_2
+
+        if self.domain == "Negative":
+            rbc_1 = -self.param.C_n * rbc_1 / self.param.a_n
+            rbc_2 = -self.param.C_n * rbc_2 / self.param.a_n
+
+        elif self.domain == "Positive":
+            rbc_1 = -self.param.C_p * rbc_1 / self.param.a_p / self.param.gamma_p
+            rbc_2 = -self.param.C_p * rbc_2 / self.param.a_p / self.param.gamma_p
+
         self.boundary_conditions = {
-            xi_1: {"left": (pybamm.Scalar(0), "Neumann"), "right": (a_k * pybamm.surf(xi_1) + alpha_1, "Neumann")},
-            xi_2: {"left": (pybamm.Scalar(0), "Neumann"), "right": (a_k * pybamm.surf(xi_2) + alpha_2, "Neumann")},
+            xi_1: {"left": (pybamm.Scalar(0), "Neumann"), "right": (rbc_1, "Neumann"),},
+            xi_2: {"left": (pybamm.Scalar(0), "Neumann"), "right": (rbc_2, "Neumann"),},
         }
 
-    def get_initial_conditions(self, variables):
+    def set_initial_conditions(self, variables):
 
         xi_1 = variables["First " + self.domain.lower() + " particle basis function"]
         xi_2 = variables["Second " + self.domain.lower() + " particle basis function"]
