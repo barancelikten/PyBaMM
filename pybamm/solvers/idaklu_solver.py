@@ -16,8 +16,8 @@ else:
     try:
         idaklu = importlib.util.module_from_spec(idaklu_spec)
         idaklu_spec.loader.exec_module(idaklu)
-    except ImportError:  # pragma: no cover
-        idaklu_spec = "Could not import idaklu module"
+    except ImportError as e:  # pragma: no cover
+        idaklu_spec = f"Could not import idaklu module: {e}"
 
 
 def have_idaklu():
