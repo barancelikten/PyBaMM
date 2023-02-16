@@ -1,0 +1,78 @@
+# Mac OS Installation
+
+The following explains how to install PyBaMM from scratch on a Mac OS operating system. These instructions should work on both Intel and Apple Silicon (M1/M2) Macs.
+
+## Pre-requisites
+
+### Python (conda)
+
+The recommended way to install Python on macOS is using `conda`.
+To check if you already have `conda` installed, run
+
+```bash
+conda --version
+```
+
+This should return something like
+
+```bash
+conda 22.11.1
+```
+
+If `conda` is not installed, follow installation instructions available on the [conda docs](https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html), then check the above command again.
+
+### Homebrew
+
+Some dependencies are not python packages and therefore require a system-level package manager.
+For these, we recommend using Homebrew.
+
+To check if you already have `brew` installed, run
+
+```bash
+brew --version
+```
+
+This should return something like
+
+```bash
+Homebrew 3.6.21
+Homebrew/homebrew-core (git revision b16ea1b5866; last commit 2023-02-07)
+```
+
+If `brew` is not installed, follow installation instructions available on the [brew website](https://brew.sh/), then check the above command again.
+
+## Create a conda environment
+
+As with any Python project, it is recommended to create a new environment for PyBaMM. We recommend using `conda` to create the environment.
+
+Create a new conda environment with the following command
+
+```bash
+conda create -n pybamm python=3.9
+```
+
+Here `pybamm` is the name of the environment, but you can choose any name you like. Currently PyBaMM only supports Python 3.8 or 3.9.
+
+To activate the environment, run
+
+```bash
+conda activate pybamm
+```
+
+## Install a version from conda
+
+You can now simply run
+
+```bash
+conda install -c conda-forge pybamm
+```
+
+to install the latest version of PyBaMM, or
+
+```bash
+conda install -c conda-forge pybamm=X.Y.Z
+```
+
+to install a specific version (e.g. `pybamm=22.10`).
+
+## Install from source
