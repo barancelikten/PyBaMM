@@ -43,6 +43,9 @@ class JaxSolver(pybamm.BaseSolver):
         The absolute tolerance for the solver (default is 1e-6).
     extrap_tol : float, optional
         The tolerance to assert whether extrapolation occurs or not (default is 0).
+    output_variables : list[str], optional
+        List of variables to calculate and return. If none are specified then
+        the complete state vector is returned (can be very large) (default is [])
     extra_options : dict, optional
         Any options to pass to the solver.
         Please consult `JAX documentation
@@ -57,6 +60,7 @@ class JaxSolver(pybamm.BaseSolver):
         rtol=1e-6,
         atol=1e-6,
         extrap_tol=None,
+        output_variables=[],
         extra_options=None,
     ):
         if not pybamm.have_jax():
@@ -67,7 +71,7 @@ class JaxSolver(pybamm.BaseSolver):
         # note: bdf solver itself calculates consistent initial conditions so can set
         # root_method to none, allow user to override this behavior
         super().__init__(
-            method, rtol, atol, root_method=root_method, extrap_tol=extrap_tol
+            method, rtol, atol, root_method=root_method, extrap_tol=extrap_tol, output_variables=output_variables
         )
         method_options = ["RK45", "BDF"]
         if method not in method_options:
@@ -75,6 +79,7 @@ class JaxSolver(pybamm.BaseSolver):
         self.ode_solver = False
         if method == "RK45":
             self.ode_solver = True
+        self.output_variables = output_variables or []
         self.extra_options = extra_options or {}
         self.name = "JAX solver ({})".format(method)
         self._cached_solves = dict()
@@ -299,9 +304,43 @@ class JaxSolver(pybamm.BaseSolver):
                 t_event,
                 y_event,
                 termination,
+                jax=True # TODO: Needs to be implmented in Solution class, is a pure python implementation.
             )
+
+            if self.output_variables:
+                # Populate variables and sensititivies dictionaries directly
+                number_of_samples = sol.y.shape[0] // sol.t.size
+                sol.y = sol.y.reshape((sol.t.size, number_of_samples))
+                startk = 0
+                for vark, var in enumerate(self.output_variables):
+                    # ExplicitTimeIntegral's are not computed as part of the solver and
+                    # do not need to be converted
+                    if isinstance(
+                        model.variables_and_events[var], pybamm.ExplicitTimeIntegral
+                    ):
+                        continue
+                    len_of_var = (
+                        self._setup["var_casadi_fcns"][var](0, 0, 0).sparsity().nnz() # TODO: This is a casadi function, needs to be implemented in python/jax.
+                    )
+                    sol._variables[var] = pybamm.ProcessedVariableComputed(
+                        [model.variables_and_events[var]],
+                        [self._setup["var_casadi_fcns"][var]], # TODO: This is a casadi function, needs to be implemented in python/jax.
+                        [sol.y[:, startk : (startk + len_of_var)]],
+                        sol,
+                    )
+                    # Add sensitivities
+                    sol[var]._sensitivities = {}
+                    if model.calculate_sensitivities:
+                        for paramk, param in enumerate(inputs_dict.keys()):
+                            sol[var].add_sensitivity(
+                                param,
+                                [sol.yS[:, startk : (startk + len_of_var), paramk]],
+                            )
+                    startk += len_of_var
+
             sol.integration_time = integration_time
             solutions.append(sol)
+
 
         if len(solutions) == 1:
             return solutions[0]
