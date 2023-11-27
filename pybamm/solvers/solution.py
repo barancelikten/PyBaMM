@@ -75,7 +75,7 @@ class Solution(object):
         termination="final time",
         sensitivities=False,
         check_solution=True,
-        jax=False,
+        compute_with_casadi=True,
     ):
         if not isinstance(all_ts, list):
             all_ts = [all_ts]
@@ -87,7 +87,7 @@ class Solution(object):
         self._all_ys = all_ys
         self._all_ys_and_sens = all_ys
         self._all_models = all_models
-        self.jax = jax
+        self.compute_with_casadi = compute_with_casadi
 
         # Set up inputs
         if not isinstance(all_inputs, list):
@@ -460,7 +460,7 @@ class Solution(object):
             {name: np.array(value) for name, value in summary_variables.items()}
         )
 
-    def update(self, variables, jax=False):
+    def update(self, variables):
         """Add ProcessedVariables to the dictionary of variables in the solution"""
         # make sure that sensitivities are extracted if required
         if isinstance(self._sensitivities, bool) and self._sensitivities:
@@ -475,7 +475,7 @@ class Solution(object):
             cumtrapz_ic = None
             pybamm.logger.debug("Post-processing {}".format(key))
             vars_pybamm = [model.variables_and_events[key] for model in self.all_models]
-            if not self.jax:
+            if self.compute_with_casadi:
                 # Iterate through all models, some may be in the list several times and
                 # therefore only get set up once
                 vars_casadi = []
@@ -516,22 +516,28 @@ class Solution(object):
                 for i, (model, ys, inputs, var_pybamm) in enumerate(
                     zip(self.all_models, self.all_ys, self.all_inputs, vars_pybamm)
                 ):
+                    update_model = False
+                    vars_value = []
                     if isinstance(var_pybamm, pybamm.ExplicitTimeIntegral):
-                        cumtrapz_ic = var_pybamm.initial_condition
-                        cumtrapz_ic = cumtrapz_ic.evaluate()
-                        var_pybamm = var_pybamm.child
-                        var_jax = var_pybamm.evaluate(inputs, ys)
+                        cumtrapz_ic = var_pybamm.initial_condition.evaluate()
+                        var_value = var_pybamm.child#.evaluate(inputs, ys)
+                        vars_pybamm[i] = var_value
+                        update_model = True
 
-                        model._variables[key] = var_jax
-                        vars_pybamm[i] = var_pybamm
                     elif key in model._variables:
-                        var_jax = model._variables[key]
-                    else:
-                        var_jax = var_pybamm.evaluate(inputs, ys)
+                        var_value = var_pybamm#.evaluate(inputs, ys)
+                        update_model = True
+
+                    if update_model:
+                        model._variables[key] = var_value
+                    vars_value.append(var_value)
+                var = pybamm.ProcessedVariable(
+                    vars_value, None, self, cumtrapz_ic=cumtrapz_ic
+                )
 
                 # Save variable and data
-                self._variables[key] = var_jax
-                self.data[key] = var_jax.data
+                self._variables[key] = var
+                self.data[key] = var.data
 
     def process_casadi_var(self, var_pybamm, inputs, ys_shape):
         t_MX = casadi.MX.sym("t")

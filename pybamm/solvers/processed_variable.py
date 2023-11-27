@@ -114,16 +114,28 @@ class ProcessedVariable(object):
         # initialise empty array of the correct size
         entries = np.empty(len(self.t_pts))
         idx = 0
-        # Evaluate the base_variable index-by-index
-        for ts, ys, inputs, base_var_casadi in zip(
-            self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
-        ):
-            for inner_idx, t in enumerate(ts):
-                t = ts[inner_idx]
-                y = ys[:, inner_idx]
-                entries[idx] = float(base_var_casadi(t, y, inputs))
+        if self.base_variables_casadi is not None:
+            # Evaluate the base_variable index-by-index
+            for ts, ys, inputs, base_var_casadi in zip(
+                self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[idx] = float(base_var_casadi(t, y, inputs))
 
-                idx += 1
+                    idx += 1
+        else:
+            # Evaluate the base_variable index-by-index
+            for ts, ys, inputs, base_var in zip(
+                self.all_ts, self.all_ys, self.all_inputs, self.base_variables
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[idx] = float(base_var.evaluate(t, y, inputs))
+
+                    idx += 1
 
         if self.cumtrapz_ic is not None:
             entries = cumulative_trapezoid(
@@ -140,16 +152,29 @@ class ProcessedVariable(object):
         len_space = self.base_eval_shape[0]
         entries = np.empty((len_space, len(self.t_pts)))
 
-        # Evaluate the base_variable index-by-index
-        idx = 0
-        for ts, ys, inputs, base_var_casadi in zip(
-            self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
-        ):
-            for inner_idx, t in enumerate(ts):
-                t = ts[inner_idx]
-                y = ys[:, inner_idx]
-                entries[:, idx] = base_var_casadi(t, y, inputs).full()[:, 0]
-                idx += 1
+        if self.base_variables_casadi is not None:
+            # Evaluate the base_variable index-by-index
+            idx = 0
+            for ts, ys, inputs, base_var_casadi in zip(
+                self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[:, idx] = base_var_casadi(t, y, inputs).full()[:, 0]
+                    idx += 1
+        else:
+            # Evaluate the base_variable index-by-index
+            idx = 0
+            for ts, ys, inputs, base_var in zip(
+                self.all_ts, self.all_ys, self.all_inputs, self.base_variables
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    # breakpoint()
+                    entries[:, idx] = base_var.evaluate(t, y, inputs).reshape(-1)
+                    idx += 1
 
         # Get node and edge values
         nodes = self.mesh.nodes
@@ -209,20 +234,36 @@ class ProcessedVariable(object):
         second_dim_size = len(second_dim_pts)
         entries = np.empty((first_dim_size, second_dim_size, len(self.t_pts)))
 
-        # Evaluate the base_variable index-by-index
-        idx = 0
-        for ts, ys, inputs, base_var_casadi in zip(
-            self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
-        ):
-            for inner_idx, t in enumerate(ts):
-                t = ts[inner_idx]
-                y = ys[:, inner_idx]
-                entries[:, :, idx] = np.reshape(
-                    base_var_casadi(t, y, inputs).full(),
-                    [first_dim_size, second_dim_size],
-                    order="F",
-                )
-                idx += 1
+        if self.base_variables_casadi is not None:
+            # Evaluate the base_variable index-by-index
+            idx = 0
+            for ts, ys, inputs, base_var_casadi in zip(
+                self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[:, :, idx] = np.reshape(
+                        base_var_casadi(t, y, inputs).full(),
+                        [first_dim_size, second_dim_size],
+                        order="F",
+                    )
+                    idx += 1
+        else:
+            # Evaluate the base_variable index-by-index
+            idx = 0
+            for ts, ys, inputs, base_var in zip(
+                self.all_ts, self.all_ys, self.all_inputs, self.base_variables
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[:, :, idx] = np.reshape(
+                        base_var.evaluate(t, y, inputs),
+                        [first_dim_size, second_dim_size],
+                        order="F",
+                    )
+                    idx += 1
 
         # add points outside first dimension domain for extrapolation to
         # boundaries
@@ -306,20 +347,36 @@ class ProcessedVariable(object):
         len_z = len(z_sol)
         entries = np.empty((len_y, len_z, len(self.t_pts)))
 
-        # Evaluate the base_variable index-by-index
-        idx = 0
-        for ts, ys, inputs, base_var_casadi in zip(
-            self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
-        ):
-            for inner_idx, t in enumerate(ts):
-                t = ts[inner_idx]
-                y = ys[:, inner_idx]
-                entries[:, :, idx] = np.reshape(
-                    base_var_casadi(t, y, inputs).full(),
-                    [len_y, len_z],
-                    order="C",
-                )
-                idx += 1
+        if self.base_variables_casadi is not None:
+            # Evaluate the base_variable index-by-index
+            idx = 0
+            for ts, ys, inputs, base_var_casadi in zip(
+                self.all_ts, self.all_ys, self.all_inputs_casadi, self.base_variables_casadi
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[:, :, idx] = np.reshape(
+                        base_var_casadi(t, y, inputs).full(),
+                        [len_y, len_z],
+                        order="C",
+                    )
+                    idx += 1
+        else:
+            # Evaluate the base_variable index-by-index
+            idx = 0
+            for ts, ys, inputs, base_var in zip(
+                self.all_ts, self.all_ys, self.all_inputs, self.base_variables
+            ):
+                for inner_idx, t in enumerate(ts):
+                    t = ts[inner_idx]
+                    y = ys[:, inner_idx]
+                    entries[:, :, idx] = np.reshape(
+                        base_var.evaluate(t, y, inputs),
+                        [len_y, len_z],
+                        order="C",
+                    )
+                    idx += 1
 
         # assign attributes for reference
         self.entries = entries

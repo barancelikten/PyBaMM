@@ -304,7 +304,7 @@ class JaxSolver(pybamm.BaseSolver):
                 t_event,
                 y_event,
                 termination,
-                jax=True # TODO: Needs to be implmented in Solution class, is a pure python implementation.
+                compute_with_casadi=False
             )
 
             if self.output_variables:
